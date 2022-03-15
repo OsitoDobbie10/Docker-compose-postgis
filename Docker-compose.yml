@@ -1,0 +1,42 @@
+version: '3.8'
+services:
+  BDB:
+    container_name: postgis_1
+    image: "postgis/postgis"
+    environment:
+      POSTGRES_USER: "dobbie"
+      POSTGRES_PASSWORD: "gis"
+      POSTGRES_DB: "postgis" 
+    ports:
+      - "5440:5432"
+    restart: always
+  web:
+      depends_on:
+        - BDB
+      image: 14000/geoserver 
+      volumes:
+        - ./target/LoginWebApp-1.war:/usr/local/tomcat/webapps/LoginWebApp-1.war
+      ports:
+        - '8589:8080'
+      environment:
+        POSTGRES_USER: "dobbie"
+        POSTGRES_PASSWORD: "gis"
+        POSTGRES_DB: "postgis" 
+  pgadmin:
+    container_name: demo_pgadmin
+    image: "dpage/pgadmin4:4.24"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin
+      PGADMIN_DEFAULT_PASSWORD: SIG
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    volumes:
+       - pgadmin:/var/lib/pgadmin
+       - ./docker_pgadmin_servers.json:/pgadmin4/servers.json
+    ports:
+      - "15433:80"
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - "/bin/echo 'postgres:5432:*:postgres:password' > /tmp/pgpassfile && chmod 600 /tmp/pgpassfile && /entrypoint.sh"
+    restart: unless-stopped
